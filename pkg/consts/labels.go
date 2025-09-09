@@ -62,6 +62,8 @@ func ComponentLabel(component ComponentType) string {
 		return "yt-ui"
 	case TimbertruckType:
 		return "yt-timbertruck"
+	case OffshoreNodeProxyType:
+		return "yt-offshore-node-proxy"
 	}
 
 	panic(fmt.Sprintf("Unknown component type: %s", component))

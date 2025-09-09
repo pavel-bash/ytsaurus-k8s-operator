@@ -75,4 +75,7 @@ const (
 
 	CypressProxyRPCPort        = 9031
 	CypressProxyMonitoringPort = 10031
+
+	OffshoreNodeProxyRPCPort        = 9032
+	OffshoreNodeProxyMonitoringPort = 10032
 )
