@@ -345,6 +345,15 @@ type HTTPTransportSpec struct {
 	DisableHTTP bool `json:"disableHttp,omitempty"`
 }
 
+type CHYTProxySpec struct {
+	//+kubebuilder:default:=8123
+	HttpPort     *int32 `json:"httpPort,omitempty"`
+	HttpNodePort *int32 `json:"httpNodePort,omitempty"`
+	//+kubebuilder:default:=8443
+	HttpsPort     *int32 `json:"httpsPort,omitempty"`
+	HttpsNodePort *int32 `json:"httpsNodePort,omitempty"`
+}
+
 type HTTPProxiesSpec struct {
 	InstanceSpec `json:",inline"`
 	//+kubebuilder:default:=NodePort
@@ -352,9 +361,10 @@ type HTTPProxiesSpec struct {
 	//+kubebuilder:default:=80
 	HttpPort *int32 `json:"httpPort,omitempty"`
 	//+kubebuilder:default:=443
-	HttpsPort     *int32 `json:"httpsPort,omitempty"`
-	HttpNodePort  *int32 `json:"httpNodePort,omitempty"`
-	HttpsNodePort *int32 `json:"httpsNodePort,omitempty"`
+	HttpsPort     *int32         `json:"httpsPort,omitempty"`
+	HttpNodePort  *int32         `json:"httpNodePort,omitempty"`
+	HttpsNodePort *int32         `json:"httpsNodePort,omitempty"`
+	ChytProxy     *CHYTProxySpec `json:"chytProxy,omitempty"`
 	//+kubebuilder:default:=default
 	//+kubebuilder:validation:MinLength:=1
 	Role string `json:"role,omitempty"`
@@ -477,6 +487,14 @@ type CRIJobEnvironmentSpec struct {
 	ImagePullPeriodSeconds *int32 `json:"imagePullPeriodSeconds,omitempty"`
 }
 
+type NvidiaRuntimeSpec struct{}
+
+type JobRuntimeSpec struct {
+	// Use NVIDIA Container Runtime.
+	//+optional
+	Nvidia *NvidiaRuntimeSpec `json:"nvidia,omitempty"`
+}
+
 type JobEnvironmentSpec struct {
 	// Isolate job execution environment from exec node or not, by default true when possible.
 	//+optional
@@ -493,6 +511,9 @@ type JobEnvironmentSpec struct {
 	// Do not use slot user id for running jobs.
 	//+optional
 	DoNotSetUserId *bool `json:"doNotSetUserId,omitempty"`
+	// Container Runtime configuration for CRI service. Default: runc.
+	//+optional
+	Runtime *JobRuntimeSpec `json:"runtime,omitempty"`
 }
 
 type ExecNodesSpec struct {
@@ -604,6 +625,8 @@ type StrawberryControllerSpec struct {
 	// DNSConfig allows customizing the DNS settings for the pods.
 	//+optional
 	DNSConfig *corev1.PodDNSConfig `json:"dnsConfig,omitempty"`
+	// Write logs to stderr.
+	LogToStderr bool `json:"logToStderr,omitempty"`
 }
 
 type YQLAgentSpec struct {
@@ -639,9 +662,16 @@ type OffshoreNodeProxiesSpec struct {
 	InstanceSpec `json:",inline"`
 }
 
+type BundleControllerSpec struct {
+	InstanceSpec `json:",inline"`
+	Disable      *bool `json:"disable,omitempty"`
+}
+
 type ClusterFeatures struct {
 	// RPC proxy have "public_rpc" address. Required for separated internal/public TLS CA.
 	RPCProxyHavePublicAddress bool `json:"rpcProxyHavePublicAddress,omitempty"`
+	// HTTP proxy have "chyt_http_server" and "chyt_https_server". Opens ports for access to chyt via HTTP proxy.
+	HTTPProxyHaveChytAddress bool `json:"httpProxyHaveChytAddress,omitempty"`
 }
 
 // CommonSpec is a set of fields shared between `YtsaurusSpec` and `Remote*NodesSpec`.
@@ -770,6 +800,7 @@ type YtsaurusSpec struct {
 	YQLAgents            *YQLAgentSpec             `json:"yqlAgents,omitempty"`
 	QueueAgents          *QueueAgentSpec           `json:"queueAgents,omitempty"`
 	CypressProxies       *CypressProxiesSpec       `json:"cypressProxies,omitempty"`
+	BundleController     *BundleControllerSpec     `json:"bundleController,omitempty"`
 	OffshoreNodeProxies  *OffshoreNodeProxiesSpec  `json:"offshoreNodeProxies,omitempty"`
 
 	UI *UISpec `json:"ui,omitempty"`
@@ -875,10 +906,9 @@ type UpdateStatus struct {
 	// Flow can be on of ""(unspecified), Stateless, Master, TabletNodes, Full and update cluster stage
 	// executes steps corresponding to that update flow.
 	// Deprecated: Use updatingComponents instead.
-	Flow                  UpdateFlow             `json:"flow,omitempty"`
-	Conditions            []metav1.Condition     `json:"conditions,omitempty"`
-	TabletCellBundles     []TabletCellBundleInfo `json:"tabletCellBundles,omitempty"`
-	MasterMonitoringPaths []string               `json:"masterMonitoringPaths,omitempty"`
+	Flow              UpdateFlow             `json:"flow,omitempty"`
+	Conditions        []metav1.Condition     `json:"conditions,omitempty"`
+	TabletCellBundles []TabletCellBundleInfo `json:"tabletCellBundles,omitempty"`
 }
 
 type Component struct {

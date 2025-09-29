@@ -78,6 +78,48 @@ _Appears in:_
 | `nodeTagFilter` _string_ |  |  |  |
 
 
+#### BundleControllerSpec
+
+
+
+
+
+
+
+_Appears in:_
+- [YtsaurusSpec](#ytsaurusspec)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `image` _string_ | Overrides coreImage for component. |  |  |
+| `entrypointWrapper` _string array_ | Specifies wrapper for component container command. |  |  |
+| `volumes` _[Volume](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volume-v1-core) array_ |  |  |  |
+| `volumeMounts` _[VolumeMount](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#volumemount-v1-core) array_ |  |  |  |
+| `readinessProbeParams` _[HealthcheckProbeParams](#healthcheckprobeparams)_ |  |  |  |
+| `resources` _[ResourceRequirements](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#resourcerequirements-v1-core)_ |  |  |  |
+| `instanceCount` _integer_ |  |  |  |
+| `minReadyInstanceCount` _integer_ |  |  |  |
+| `locations` _[LocationSpec](#locationspec) array_ |  |  |  |
+| `volumeClaimTemplates` _[EmbeddedPersistentVolumeClaim](#embeddedpersistentvolumeclaim) array_ |  |  |  |
+| `runtimeClassName` _string_ |  |  |  |
+| `enableAntiAffinity` _boolean_ | Deprecated: use Affinity.PodAntiAffinity instead. |  |  |
+| `hostNetwork` _boolean_ | Use the host's network namespace, this overrides global option. |  |  |
+| `monitoringPort` _integer_ |  |  |  |
+| `loggers` _[TextLoggerSpec](#textloggerspec) array_ |  |  |  |
+| `structuredLoggers` _[StructuredLoggerSpec](#structuredloggerspec) array_ |  |  |  |
+| `affinity` _[Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#affinity-v1-core)_ |  |  |  |
+| `nodeSelector` _object (keys:string, values:string)_ |  |  |  |
+| `tolerations` _[Toleration](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#toleration-v1-core) array_ |  |  |  |
+| `podLabels` _object (keys:string, values:string)_ |  |  |  |
+| `podAnnotations` _object (keys:string, values:string)_ |  |  |  |
+| `setHostnameAsFqdn` _boolean_ | SetHostnameAsFQDN indicates whether to set the hostname as FQDN. | true |  |
+| `terminationGracePeriodSeconds` _integer_ | Optional duration in seconds the pod needs to terminate gracefully. |  |  |
+| `nativeTransport` _[RPCTransportSpec](#rpctransportspec)_ | Component config for native RPC bus transport. |  |  |
+| `dnsConfig` _[PodDNSConfig](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#poddnsconfig-v1-core)_ | DNSConfig allows customizing the DNS settings for the pods. |  |  |
+| `dnsPolicy` _[DNSPolicy](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#dnspolicy-v1-core)_ |  |  |  |
+| `disable` _boolean_ |  |  |  |
+
+
 #### BundlesBootstrapSpec
 
 
@@ -93,6 +135,25 @@ _Appears in:_
 | --- | --- | --- | --- |
 | `sys` _[BundleBootstrapSpec](#bundlebootstrapspec)_ |  |  |  |
 | `default` _[BundleBootstrapSpec](#bundlebootstrapspec)_ |  |  |  |
+
+
+#### CHYTProxySpec
+
+
+
+
+
+
+
+_Appears in:_
+- [HTTPProxiesSpec](#httpproxiesspec)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `httpPort` _integer_ |  | 8123 |  |
+| `httpNodePort` _integer_ |  |  |  |
+| `httpsPort` _integer_ |  | 8443 |  |
+| `httpsNodePort` _integer_ |  |  |  |
 
 
 #### CRIJobEnvironmentSpec
@@ -268,6 +329,7 @@ _Appears in:_
 | Field | Description | Default | Validation |
 | --- | --- | --- | --- |
 | `rpcProxyHavePublicAddress` _boolean_ | RPC proxy have "public_rpc" address. Required for separated internal/public TLS CA. |  |  |
+| `httpProxyHaveChytAddress` _boolean_ | HTTP proxy have "chyt_http_server" and "chyt_https_server". Opens ports for access to chyt via HTTP proxy. |  |  |
 
 
 #### ClusterNodesSpec
@@ -619,6 +681,7 @@ It contains TypeMeta and a reduced ObjectMeta.
 
 
 _Appears in:_
+- [BundleControllerSpec](#bundlecontrollerspec)
 - [ControllerAgentsSpec](#controlleragentsspec)
 - [CypressProxiesSpec](#cypressproxiesspec)
 - [DataNodesSpec](#datanodesspec)
@@ -764,6 +827,7 @@ _Appears in:_
 | `httpsPort` _integer_ |  | 443 |  |
 | `httpNodePort` _integer_ |  |  |  |
 | `httpsNodePort` _integer_ |  |  |  |
+| `chytProxy` _[CHYTProxySpec](#chytproxyspec)_ |  |  |  |
 | `role` _string_ |  | default | MinLength: 1 <br /> |
 | `transport` _[HTTPTransportSpec](#httptransportspec)_ |  |  |  |
 
@@ -794,6 +858,7 @@ _Appears in:_
 
 
 _Appears in:_
+- [BundleControllerSpec](#bundlecontrollerspec)
 - [ControllerAgentsSpec](#controlleragentsspec)
 - [CypressProxiesSpec](#cypressproxiesspec)
 - [DataNodesSpec](#datanodesspec)
@@ -850,6 +915,7 @@ _Appears in:_
 
 
 _Appears in:_
+- [BundleControllerSpec](#bundlecontrollerspec)
 - [ControllerAgentsSpec](#controlleragentsspec)
 - [CypressProxiesSpec](#cypressproxiesspec)
 - [DataNodesSpec](#datanodesspec)
@@ -920,6 +986,23 @@ _Appears in:_
 | `cri` _[CRIJobEnvironmentSpec](#crijobenvironmentspec)_ | CRI service configuration for running jobs in sidecar container. |  |  |
 | `useArtifactBinds` _boolean_ | Pass artifacts as read-only bind-mounts rather than symlinks. |  |  |
 | `doNotSetUserId` _boolean_ | Do not use slot user id for running jobs. |  |  |
+| `runtime` _[JobRuntimeSpec](#jobruntimespec)_ | Container Runtime configuration for CRI service. Default: runc. |  |  |
+
+
+#### JobRuntimeSpec
+
+
+
+
+
+
+
+_Appears in:_
+- [JobEnvironmentSpec](#jobenvironmentspec)
+
+| Field | Description | Default | Validation |
+| --- | --- | --- | --- |
+| `nvidia` _[NvidiaRuntimeSpec](#nvidiaruntimespec)_ | Use NVIDIA Container Runtime. |  |  |
 
 
 #### KafkaProxiesSpec
@@ -974,6 +1057,7 @@ _Appears in:_
 
 
 _Appears in:_
+- [BundleControllerSpec](#bundlecontrollerspec)
 - [ControllerAgentsSpec](#controlleragentsspec)
 - [CypressProxiesSpec](#cypressproxiesspec)
 - [DataNodesSpec](#datanodesspec)
@@ -1258,6 +1342,19 @@ _Appears in:_
 | `sidecars` _string array_ | List of sidecar containers as yaml of core/v1 Container. |  |  |
 
 
+#### NvidiaRuntimeSpec
+
+
+
+
+
+
+
+_Appears in:_
+- [JobRuntimeSpec](#jobruntimespec)
+
+
+
 #### OauthServiceSpec
 
 
@@ -1450,6 +1547,7 @@ _Appears in:_
 
 
 _Appears in:_
+- [BundleControllerSpec](#bundlecontrollerspec)
 - [CommonSpec](#commonspec)
 - [ControllerAgentsSpec](#controlleragentsspec)
 - [CypressProxiesSpec](#cypressproxiesspec)
@@ -2051,6 +2149,7 @@ _Appears in:_
 | `controllerFamilies` _string array_ | Supported controller families, for example: "chyt", "jupyt", "livy". |  |  |
 | `defaultRouteFamily` _string_ | The family that will receive requests for domains that are not explicitly specified in http_controller_mappings.<br />For example, "chyt" (with `ControllerFamilies` set to \{"chyt", "jupyt"\} would mean<br />that requests to "foo.<domain>" will be processed by chyt controller. |  |  |
 | `dnsConfig` _[PodDNSConfig](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#poddnsconfig-v1-core)_ | DNSConfig allows customizing the DNS settings for the pods. |  |  |
+| `logToStderr` _boolean_ | Write logs to stderr. |  |  |
 
 
 #### StructuredLoggerSpec
@@ -2062,6 +2161,7 @@ _Appears in:_
 
 
 _Appears in:_
+- [BundleControllerSpec](#bundlecontrollerspec)
 - [ControllerAgentsSpec](#controlleragentsspec)
 - [CypressProxiesSpec](#cypressproxiesspec)
 - [DataNodesSpec](#datanodesspec)
@@ -2211,6 +2311,7 @@ _Appears in:_
 
 
 _Appears in:_
+- [BundleControllerSpec](#bundlecontrollerspec)
 - [ControllerAgentsSpec](#controlleragentsspec)
 - [CypressProxiesSpec](#cypressproxiesspec)
 - [DataNodesSpec](#datanodesspec)
@@ -2393,7 +2494,6 @@ _Appears in:_
 | `flow` _[UpdateFlow](#updateflow)_ | Flow is an internal field that is needed to persist the chosen flow until the end of an update.<br />Flow can be on of ""(unspecified), Stateless, Master, TabletNodes, Full and update cluster stage<br />executes steps corresponding to that update flow.<br />Deprecated: Use updatingComponents instead. |  |  |
 | `conditions` _[Condition](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.28/#condition-v1-meta) array_ |  |  |  |
 | `tabletCellBundles` _[TabletCellBundleInfo](#tabletcellbundleinfo) array_ |  |  |  |
-| `masterMonitoringPaths` _string array_ |  |  |  |
 
 
 #### YQLAgentSpec
@@ -2515,6 +2615,7 @@ _Appears in:_
 | `yqlAgents` _[YQLAgentSpec](#yqlagentspec)_ |  |  |  |
 | `queueAgents` _[QueueAgentSpec](#queueagentspec)_ |  |  |  |
 | `cypressProxies` _[CypressProxiesSpec](#cypressproxiesspec)_ |  |  |  |
+| `bundleController` _[BundleControllerSpec](#bundlecontrollerspec)_ |  |  |  |
 | `ui` _[UISpec](#uispec)_ |  |  |  |
 
 

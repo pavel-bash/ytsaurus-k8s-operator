@@ -341,6 +341,34 @@ func fillBusServer(b *BusServer, s *ytv1.RPCTransportSpec, keyring *Keyring) {
 	}
 }
 
+func fillChytServer(spec *ytv1.HTTPProxiesSpec, srv *HTTPProxyServer) error {
+	chytProxy := ptr.Deref(spec.ChytProxy, ytv1.CHYTProxySpec{})
+	httpPort := ptr.Deref(chytProxy.HttpPort, consts.HTTPProxyChytHttpPort)
+
+	srv.ChytHttpServer = &HTTPServer{
+		Port: int(httpPort),
+	}
+
+	if spec.Transport.HTTPSSecret != nil {
+		httpsPort := ptr.Deref(chytProxy.HttpPort, consts.HTTPProxyChytHttpsPort)
+		srv.ChytHttpsServer = &HTTPSServer{
+			HTTPServer: HTTPServer{
+				Port: int(httpsPort),
+			},
+			Credentials: HTTPSServerCredentials{
+				CertChain: PemBlob{
+					FileName: path.Join(consts.HTTPSSecretMountPoint, corev1.TLSCertKey),
+				},
+				PrivateKey: PemBlob{
+					FileName: path.Join(consts.HTTPSSecretMountPoint, corev1.TLSPrivateKeyKey),
+				},
+				UpdatePeriod: yson.Duration(consts.HTTPSSecretUpdatePeriod),
+			},
+		}
+	}
+	return nil
+}
+
 func (g *NodeGenerator) fillClusterConnectionEncryption(c *ClusterConnection, s *ytv1.RPCTransportSpec, keyring *Keyring) {
 	if s == nil {
 		// Use common bus transport config
@@ -450,6 +478,14 @@ func (g *Generator) getMasterConfigImpl(spec *ytv1.MastersSpec) (MasterServer, e
 	configureMasterServerCypressManager(g.GetMaxReplicationFactor(), &c.CypressManager)
 
 	c.BusClient = c.ClusterConnection.BusClient
+
+	if addresses := g.getDiscoveryAddresses(); len(addresses) > 0 {
+		c.DiscoveryServer = &DiscoveryConnection{
+			AddressList{
+				Addresses: addresses,
+			},
+		}
+	}
 
 	// COMPAT(l0kix2): remove that after we drop support for specifying host network without master host addresses.
 	if ptr.Deref(spec.HostNetwork, g.ytsaurus.Spec.HostNetwork) && len(spec.HostAddresses) == 0 {
@@ -832,6 +868,13 @@ func (g *Generator) getHTTPProxyConfigImpl(spec *ytv1.HTTPProxiesSpec) (HTTPProx
 		}
 	}
 
+	if g.clusterFeatures.HTTPProxyHaveChytAddress {
+		err := fillChytServer(spec, &c)
+		if err != nil {
+			return c, err
+		}
+	}
+
 	return c, nil
 }
 
@@ -925,6 +968,27 @@ func (g *Generator) GetYQLAgentConfig(spec *ytv1.YQLAgentSpec) ([]byte, error) {
 		return []byte{}, nil
 	}
 	c, err := g.getYQLAgentConfigImpl(spec)
+	if err != nil {
+		return nil, err
+	}
+	return marshallYsonConfig(c)
+}
+
+func (g *Generator) getBundleControllerConfigImpl(spec *ytv1.BundleControllerSpec) (BundleControllerServer, error) {
+	c, err := getBundleControllerServerCarcass(spec)
+	if err != nil {
+		return BundleControllerServer{}, err
+	}
+
+	g.fillCommonService(&c.CommonServer, &spec.InstanceSpec)
+	g.fillBusServer(&c.CommonServer, spec.NativeTransport)
+	c.BundleController.Cluster = g.ytsaurus.Name
+
+	return c, nil
+}
+
+func (g *Generator) GetBundleControllerConfig(spec *ytv1.BundleControllerSpec) ([]byte, error) {
+	c, err := g.getBundleControllerConfigImpl(spec)
 	if err != nil {
 		return nil, err
 	}
@@ -1142,6 +1206,10 @@ func (g *Generator) GetComponentNames(component consts.ComponentType) ([]string,
 		if g.ytsaurus.Spec.YQLAgents != nil {
 			names = append(names, "")
 		}
+	case consts.BundleControllerType:
+		if g.ytsaurus.Spec.BundleController != nil {
+			names = append(names, "")
+		}
 	default:
 		return nil, fmt.Errorf("unknown component %v", component)
 	}
@@ -1240,6 +1308,10 @@ func (g *Generator) GetComponentConfig(component consts.ComponentType, name stri
 	case consts.YqlAgentType:
 		if name == "" {
 			return g.GetYQLAgentConfig(g.ytsaurus.Spec.YQLAgents)
+		}
+	case consts.BundleControllerType:
+		if name == "" {
+			return g.GetBundleControllerConfig(g.ytsaurus.Spec.BundleController)
 		}
 	}
 

@@ -62,7 +62,7 @@ var (
 
 var (
 	masterVolumeSize   = resource.MustParse("5Gi")
-	dataNodeVolumeSize = resource.MustParse("5Gi")
+	dataNodeVolumeSize = resource.MustParse("10Gi")
 	execNodeVolumeSize = resource.MustParse("5Gi")
 )
 
@@ -210,6 +210,12 @@ func (b *YtsaurusBuilder) WithMasterCaches() {
 			MinReadyInstanceCount: b.MinReadyInstanceCount,
 			Loggers:               b.CreateLoggersSpec(),
 		},
+	}
+}
+
+func (b *YtsaurusBuilder) WithClusterFeatures() {
+	b.Ytsaurus.Spec.ClusterFeatures = &ytv1.ClusterFeatures{
+		HTTPProxyHaveChytAddress: true,
 	}
 }
 

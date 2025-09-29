@@ -11,6 +11,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/record"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
@@ -44,6 +45,10 @@ func (c *Ytsaurus) GetResource() *ytv1.Ytsaurus {
 
 func (c *Ytsaurus) GetCommonSpec() ytv1.CommonSpec {
 	return c.GetResource().Spec.CommonSpec
+}
+
+func (c *Ytsaurus) GetClusterFeatures() ytv1.ClusterFeatures {
+	return ptr.Deref(c.GetCommonSpec().ClusterFeatures, ytv1.ClusterFeatures{})
 }
 
 func (c *Ytsaurus) GetClusterState() ytv1.ClusterState {
@@ -90,7 +95,6 @@ func (c *Ytsaurus) SetBlockedComponents(components []ytv1.Component) bool {
 func (c *Ytsaurus) ClearUpdateStatus(ctx context.Context) error {
 	c.ytsaurus.Status.UpdateStatus.Conditions = make([]metav1.Condition, 0)
 	c.ytsaurus.Status.UpdateStatus.TabletCellBundles = make([]ytv1.TabletCellBundleInfo, 0)
-	c.ytsaurus.Status.UpdateStatus.MasterMonitoringPaths = make([]string, 0)
 	c.SetUpdatingComponents(nil)
 	return c.apiProxy.UpdateStatus(ctx)
 }

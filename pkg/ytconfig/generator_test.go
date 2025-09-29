@@ -258,6 +258,17 @@ func TestGetContainerdConfig(t *testing.T) {
 	canonize.Assert(t, cfg)
 }
 
+func TestGetContainerdConfigWithNvidia(t *testing.T) {
+	ytsaurus := getYtsaurusWithoutNodes()
+	canonize.AssertStruct(t, "ytsaurus", ytsaurus)
+	spec := withRuntime(withCri(getExecNodeSpec(nil), nil, false, nil), &ytv1.JobRuntimeSpec{Nvidia: &ytv1.NvidiaRuntimeSpec{}})
+	canonize.AssertStruct(t, "exec-node", spec)
+	g := NewCRIConfigGenerator(&spec)
+	cfg, err := g.GetContainerdConfig()
+	require.NoError(t, err)
+	canonize.Assert(t, cfg)
+}
+
 func TestGetExecNodeWithoutYtsaurusConfig(t *testing.T) {
 	remoteYtsaurus := getRemoteYtsaurus()
 	commonSpec := getCommonSpec()
@@ -307,6 +318,57 @@ func TestGetHTTPProxyConfigWithCustomPorts(t *testing.T) {
 	proxySpec := getHTTPProxySpec()
 	proxySpec.HttpPort = ptr.To(int32(8080))
 	proxySpec.HttpsPort = ptr.To(int32(80443))
+	canonize.AssertStruct(t, "http-proxy", proxySpec)
+	cfg, err := g.GetHTTPProxyConfig(proxySpec)
+	require.NoError(t, err)
+	canonize.Assert(t, cfg)
+}
+
+func TestGetHTTPProxyWithChytServer(t *testing.T) {
+	spec := getYtsaurusWithoutNodes()
+	spec.Spec.OauthService = nil
+	spec.Spec.ClusterFeatures = &ytv1.ClusterFeatures{
+		HTTPProxyHaveChytAddress: true,
+	}
+	g := NewGenerator(spec, testClusterDomain)
+	canonize.AssertStruct(t, "ytsaurus", g.ytsaurus)
+	proxySpec := getHTTPProxySpec()
+	canonize.AssertStruct(t, "http-proxy", proxySpec)
+	cfg, err := g.GetHTTPProxyConfig(proxySpec)
+	require.NoError(t, err)
+	canonize.Assert(t, cfg)
+}
+
+func TestGetHTTPProxyWithChytServerNoTls(t *testing.T) {
+	spec := getYtsaurusWithoutNodes()
+	spec.Spec.OauthService = nil
+	spec.Spec.ClusterFeatures = &ytv1.ClusterFeatures{
+		HTTPProxyHaveChytAddress: true,
+	}
+	g := NewGenerator(spec, testClusterDomain)
+	canonize.AssertStruct(t, "ytsaurus", g.ytsaurus)
+	proxySpec := getHTTPProxySpec()
+	proxySpec.Transport.HTTPSSecret = nil
+	canonize.AssertStruct(t, "http-proxy", proxySpec)
+	cfg, err := g.GetHTTPProxyConfig(proxySpec)
+	require.NoError(t, err)
+	canonize.Assert(t, cfg)
+}
+
+func TestGetHTTPProxyWithChytCustomSpecServerNoTls(t *testing.T) {
+	spec := getYtsaurusWithoutNodes()
+	spec.Spec.OauthService = nil
+	spec.Spec.ClusterFeatures = &ytv1.ClusterFeatures{
+		HTTPProxyHaveChytAddress: true,
+	}
+	g := NewGenerator(spec, testClusterDomain)
+	canonize.AssertStruct(t, "ytsaurus", g.ytsaurus)
+	proxySpec := getHTTPProxySpec()
+	proxySpec.ChytProxy = &ytv1.CHYTProxySpec{
+		HttpPort:  ptr.To(int32(18123)),
+		HttpsPort: ptr.To(int32(18443)),
+	}
+	proxySpec.Transport.HTTPSSecret = nil
 	canonize.AssertStruct(t, "http-proxy", proxySpec)
 	cfg, err := g.GetHTTPProxyConfig(proxySpec)
 	require.NoError(t, err)
@@ -470,6 +532,15 @@ func TestGetCypressProxiesConfig(t *testing.T) {
 	canonize.AssertStruct(t, "ytsaurus", ytsaurus)
 	g := NewGenerator(ytsaurus, testClusterDomain)
 	cfg, err := g.GetCypressProxiesConfig(ytsaurus.Spec.CypressProxies)
+	require.NoError(t, err)
+	canonize.Assert(t, cfg)
+}
+
+func TestGetBundleControllerConfig(t *testing.T) {
+	ytsaurus := getYtsaurusWithoutNodes()
+	canonize.AssertStruct(t, "ytsaurus", ytsaurus)
+	g := NewGenerator(ytsaurus, testClusterDomain)
+	cfg, err := g.GetBundleControllerConfig(ytsaurus.Spec.BundleController)
 	require.NoError(t, err)
 	canonize.Assert(t, cfg)
 }
@@ -687,6 +758,7 @@ func getYtsaurusWithoutNodes() *ytv1.Ytsaurus {
 	ytsaurus = withYQLAgent(ytsaurus)
 	ytsaurus = withMasterCaches(ytsaurus)
 	ytsaurus = withCypressProxies(ytsaurus)
+	ytsaurus = withBundleController(ytsaurus)
 	return ytsaurus
 }
 
@@ -834,6 +906,11 @@ func withCypressProxies(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
 	return ytsaurus
 }
 
+func withBundleController(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
+	ytsaurus.Spec.BundleController = &ytv1.BundleControllerSpec{InstanceSpec: testBasicInstanceSpec}
+	return ytsaurus
+}
+
 func withYQLAgent(ytsaurus *ytv1.Ytsaurus) *ytv1.Ytsaurus {
 	ytsaurus.Spec.YQLAgents = &ytv1.YQLAgentSpec{InstanceSpec: testBasicInstanceSpec}
 	return ytsaurus
@@ -913,6 +990,14 @@ func withCri(spec ytv1.ExecNodesSpec, jobResources *corev1.ResourceRequirements,
 		DoNotSetUserId:   ptr.To(true),
 		Isolated:         ptr.To(isolated),
 	}
+	return spec
+}
+
+func withRuntime(
+	spec ytv1.ExecNodesSpec,
+	runtime *ytv1.JobRuntimeSpec,
+) ytv1.ExecNodesSpec {
+	spec.JobEnvironment.Runtime = runtime
 	return spec
 }
 

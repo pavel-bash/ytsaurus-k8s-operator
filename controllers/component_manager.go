@@ -156,6 +156,11 @@ func NewComponentManager(
 		allComponents = append(allComponents, cyp)
 	}
 
+	if resource.Spec.BundleController != nil {
+		bc := components.NewBundleController(cfgen, ytsaurus)
+		allComponents = append(allComponents, bc)
+	}
+
 	if resource.Spec.OffshoreNodeProxies != nil {
 		onp := components.NewOffshoreNodeProxy(cfgen, ytsaurus)
 		allComponents = append(allComponents, onp)
