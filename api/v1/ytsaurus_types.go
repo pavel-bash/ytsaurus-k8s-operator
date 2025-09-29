@@ -658,13 +658,13 @@ type CypressProxiesSpec struct {
 	Disable      *bool `json:"disable,omitempty"`
 }
 
-type OffshoreNodeProxiesSpec struct {
-	InstanceSpec `json:",inline"`
-}
-
 type BundleControllerSpec struct {
 	InstanceSpec `json:",inline"`
 	Disable      *bool `json:"disable,omitempty"`
+}
+
+type OffshoreNodeProxiesSpec struct {
+	InstanceSpec `json:",inline"`
 }
 
 type ClusterFeatures struct {
